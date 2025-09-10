@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Translator & String Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        .tab-active {
+            position: relative;
+        }
+        .tab-active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: #3b82f6;
+            border-radius: 3px 3px 0 0;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .history-item {
+            transition: all 0.3s ease;
+        }
+        .history-item:hover {
+            transform: translateX(5px);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden">
+        <header class="bg-indigo-600 text-white p-6 text-center">
+            <h1 class="text-3xl font-bold mb-2">Translator & String Generator</h1>
+            <p class="text-indigo-100">Simple tools for translation and random string generation</p>
+        </header>
+        
+        <div class="flex border-b border-gray-200">
+            <button id="translator-tab" class="tab-active flex-1 py-4 px-6 text-center font-medium text-indigo-600" onclick="switchTab('translator')">
+                Translator
+            </button>
+            <button id="generator-tab" class="flex-1 py-4 px-6 text-center font-medium text-gray-500" onclick="switchTab('generator')">
+                String Generator
+            </button>
+        </div>
+        
+        <div class="p-6">
+            <!-- Translator Tab -->
+            <div id="translator-content" class="tab-content fade-in">
+                <div class="mb-5">
+                    <label for="text-to-translate" class="block text-sm font-medium text-gray-700 mb-2">Text to Translate (English)</label>
+                    <textarea id="text-to-translate" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter text here..."></textarea>
+                </div>
+                
+                <div class="mb-5">
+                    <label for="target-language" class="block text-sm font-medium text-gray-700 mb-2">Target Language</label>
+                    <select id="target-language" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="it">Italian</option>
+                        <option value="pt">Portuguese</option>
+                        <option value="ja">Japanese</option>
+                        <option value="ko">Korean</option>
+                        <option value="zh">Chinese</option>
+                    </select>
+                </div>
+                
+                <button onclick="translateText()" class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+                    </svg>
+                    Translate
+                </button>
+                
+                <div id="translation-result" class="mt-6 p-4 bg-indigo-50 rounded-lg border-l-4 border-indigo-500">
+                    <p class="text-gray-600">Translation will appear here...</p>
+                </div>
+                
+                <div class="mt-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Recent Translations
+                    </h3>
+                    <div id="history-items" class="space-y-2">
+                        <div class="history-item p-3 bg-gray-100 rounded-lg text-sm">
+                            <span class="font-medium">Hello</span> → <span class="text-indigo-600">Hola</span>
+                        </div>
+                        <div class="history-item p-3 bg-gray-100 rounded-lg text-sm">
+                            <span class="font-medium">Thank you</span> → <span class="text-indigo-600">Gracias</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Generator Tab -->
+            <div id="generator-content" class="tab-content hidden fade-in">
+                <div class="mb-5">
+                    <label for="string-length" class="block text-sm font-medium text-gray-700 mb-2">String Length: <span id="length-value">12</span></label>
+                    <input type="range" id="string-length" min="4" max="32" value="12" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>4</span>
+                        <span>18</span>
+                        <span>32</span>
+                    </div>
+                </div>
+                
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Options</label>
+                    <div class="flex space-x-6">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="include-numbers" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <span class="ml-2 text-gray-700">Include Numbers</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="include-symbols" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <span class="ml-2 text-gray-700">Include Symbols</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <button onclick="generateString()" class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Generate String
+                </button>
+                
+                <div id="generated-string" class="mt-6 p-4 bg-indigo-50 rounded-lg border-l-4 border-indigo-500">
+                    <p class="text-gray-600">Your generated string will appear here...</p>
+                </div>
+                
+                <div class="mt-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Recently Generated
+                    </h3>
+                    <div id="generated-history" class="space-y-2">
+                        <div class="history-item p-3 bg-gray-100 rounded-lg text-sm font-mono">xY7#pQ9@kL2</div>
+                        <div class="history-item p-3 bg-gray-100 rounded-lg text-sm font-mono">mN4$bR8!sT1</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="bg-gray-100 p-4 text-center text-gray-500 text-sm">
+            
+        </footer>
+    </div>
+
+    <script>
+        // DOM elements
+        const lengthSlider = document.getElementById('string-length');
+        const lengthValue = document.getElementById('length-value');
+        const translatorTab = document.getElementById('translator-tab');
+        const generatorTab = document.getElementById('generator-tab');
+        const translatorContent = document.getElementById('translator-content');
+        const generatorContent = document.getElementById('generator-content');
+        
+        // Update length value when slider changes
+        lengthSlider.addEventListener('input', () => {
+            lengthValue.textContent = lengthSlider.value;
+        });
+        
+        // Switch between tabs
+        function switchTab(tabName) {
+            if (tabName === 'translator') {
+                translatorTab.classList.add('tab-active', 'text-indigo-600');
+                translatorTab.classList.remove('text-gray-500');
+                generatorTab.classList.remove('tab-active', 'text-indigo-600');
+                generatorTab.classList.add('text-gray-500');
+                translatorContent.classList.remove('hidden');
+                generatorContent.classList.add('hidden');
+            } else {
+                generatorTab.classList.add('tab-active', 'text-indigo-600');
+                generatorTab.classList.remove('text-gray-500');
+                translatorTab.classList.remove('tab-active', 'text-indigo-600');
+                translatorTab.classList.add('text-gray-500');
+                generatorContent.classList.remove('hidden');
+                translatorContent.classList.add('hidden');
+            }
+        }
+        
+
+
+        function translateText() {
+    const text = document.getElementById('text-to-translate').value;
+    const language = document.getElementById('target-language').value;
+    const resultDiv = document.getElementById('translation-result');
+
+    if (!text.trim()) {
+        resultDiv.innerHTML = '<p class="text-red-600">Please enter some text to translate</p>';
+        return;
+    }
+
+    const translateBtn = document.querySelector('#translator-content button');
+    const originalText = translateBtn.innerHTML;
+    translateBtn.innerHTML = `Translating...`;
+    translateBtn.disabled = true;
+
+    // Call LibreTranslate API
+    fetch("https://libretranslate.de/translate", {
+        method: "POST",
+        body: JSON.stringify({
+            q: text,
+            source: "en",
+            target: language,
+            format: "text"
+        }),
+        headers: { "Content-Type": "application/json" }
+    })
+    .then(res => res.json())
+    .then(data => {
+        const translatedText = data.translatedText;
+
+        resultDiv.innerHTML = `
+            <p class="font-medium">Original:</p>
+            <p class="mb-3">${text}</p>
+            <p class="font-medium">Translation:</p>
+            <p class="text-indigo-600">${translatedText}</p>
+        `;
+
+        addToTranslationHistory(text, translatedText);
+    })
+    .catch(err => {
+        console.error(err);
+        resultDiv.innerHTML = `<p class="text-red-600">Error: Could not translate</p>`;
+    })
+    .finally(() => {
+        translateBtn.innerHTML = originalText;
+        translateBtn.disabled = false;
+    });
+}
+
+        // Translation function
+        // function translateText() {
+        //     const text = document.getElementById('text-to-translate').value;
+        //     const language = document.getElementById('target-language').value;
+        //     const resultDiv = document.getElementById('translation-result');
+            
+        //     if (!text.trim()) {
+        //         resultDiv.innerHTML = '<p class="text-red-600">Please enter some text to translate</p>';
+        //         return;
+        //     }
+            
+        //     // Show loading state
+        //     const translateBtn = document.querySelector('#translator-content button');
+        //     const originalText = translateBtn.innerHTML;
+        //     translateBtn.innerHTML = `
+        //         <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        //             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        //             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        //         </svg>
+        //         Translating...
+        //     `;
+        //     translateBtn.disabled = true;
+            
+        //     // Simulate API call with timeout
+        //     setTimeout(() => {
+        //         // Mock translations for demonstration
+        //         const mockTranslations = {
+        //             es: `Translated to Spanish: ${text}`,
+        //             fr: `Translated to French: ${text}`,
+        //             de: `Translated to German: ${text}`,
+        //             it: `Translated to Italian: ${text}`,
+        //             pt: `Translated to Portuguese: ${text}`,
+        //             ja: `Translated to Japanese: ${text}`,
+        //             ko: `Translated to Korean: ${text}`,
+        //             zh: `Translated to Chinese: ${text}`
+        //         };
+                
+        //         const translatedText = mockTranslations[language] || `Translated: ${text}`;
+                
+        //         // Display result
+        //         resultDiv.innerHTML = `
+        //             <p class="font-medium">Original:</p>
+        //             <p class="mb-3">${text}</p>
+        //             <p class="font-medium">Translation:</p>
+        //             <p class="text-indigo-600">${translatedText}</p>
+        //         `;
+                
+        //         // Add to history
+        //         addToTranslationHistory(text, translatedText);
+                
+        //         // Reset button
+        //         translateBtn.innerHTML = originalText;
+        //         translateBtn.disabled = false;
+        //     }, 1500);
+        // }
+        
+        // Add to translation history
+        function addToTranslationHistory(original, translation) {
+            const historyItems = document.getElementById('history-items');
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item p-3 bg-gray-100 rounded-lg text-sm';
+            historyItem.innerHTML = `
+                <span class="font-medium">${original.substring(0, 20)}${original.length > 20 ? '...' : ''}</span> → 
+                <span class="text-indigo-600">${translation.substring(0, 20)}${translation.length > 20 ? '...' : ''}</span>
+            `;
+            historyItems.prepend(historyItem);
+            
+            // Limit history to 5 items
+            if (historyItems.children.length > 5) {
+                historyItems.removeChild(historyItems.lastChild);
+            }
+        }
+        
+        // String generation function
+        function generateString() {
+            const length = parseInt(lengthSlider.value);
+            const includeNumbers = document.getElementById('include-numbers').checked;
+            const includeSymbols = document.getElementById('include-symbols').checked;
+            const resultDiv = document.getElementById('generated-string');
+            
+            // Show loading state
+            const generateBtn = document.querySelector('#generator-content button');
+            const originalText = generateBtn.innerHTML;
+            generateBtn.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Generating...
+            `;
+            generateBtn.disabled = true;
+            
+            // Simulate processing with timeout
+            setTimeout(() => {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+                const numbers = '0123456789';
+                const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+                
+                let characterSet = chars;
+                if (includeNumbers) characterSet += numbers;
+                if (includeSymbols) characterSet += symbols;
+                
+                let result = '';
+                for (let i = 0; i < length; i++) {
+                    result += characterSet.charAt(Math.floor(Math.random() * characterSet.length));
+                }
+                
+                // Display result
+                resultDiv.innerHTML = `
+                    <p class="font-medium">Generated String:</p>
+                    <p class="text-xl font-mono my-3 p-3 bg-white rounded border">${result}</p>
+                    <button onclick="copyToClipboard('${result}')" class="mt-2 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition">
+                        Copy to Clipboard
+                    </button>
+                `;
+                
+                // Add to history
+                addToGenerationHistory(result);
+                
+                // Reset button
+                generateBtn.innerHTML = originalText;
+                generateBtn.disabled = false;
+            }, 800);
+        }
+        
+        // Add to generation history
+        function addToGenerationHistory(string) {
+            const historyDiv = document.getElementById('generated-history');
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item p-3 bg-gray-100 rounded-lg text-sm font-mono flex justify-between items-center';
+            historyItem.innerHTML = `
+                <span>${string}</span>
+                <button onclick="copyToClipboard('${string}')" class="text-green-600 hover:text-green-800">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                    </svg>
+                </button>
+            `;
+            historyDiv.prepend(historyItem);
+            
+            // Limit history to 5 items
+            if (historyDiv.children.length > 5) {
+                historyDiv.removeChild(historyDiv.lastChild);
+            }
+        }
+        
+        // Copy to clipboard function
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+    </script>
+</body>
+</html>
